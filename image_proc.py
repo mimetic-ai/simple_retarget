@@ -1,8 +1,17 @@
 import cv2
 import mediapipe as mp
 import numpy as np
+import torch
 mp_drawing = mp.solutions.drawing_utils
 mp_pose = mp.solutions.pose
+
+
+##Z forward
+
+##Y up
+
+##X side
+
 
 
 
@@ -28,9 +37,9 @@ def getArmPosesFrame(input):
         try:
             landmarks = results.pose_landmarks.landmark
             # Get coordinates
-            l_shoulder = np.asarray([landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].x,landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].y, landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].z])
-            l_elbow = np.asarray([landmarks[mp_pose.PoseLandmark.LEFT_ELBOW.value].x,landmarks[mp_pose.PoseLandmark.LEFT_ELBOW.value].y, landmarks[mp_pose.PoseLandmark.LEFT_ELBOW.value].z])
-            l_wrist = np.asarray([landmarks[mp_pose.PoseLandmark.LEFT_WRIST.value].x,landmarks[mp_pose.PoseLandmark.LEFT_WRIST.value].y, landmarks[mp_pose.PoseLandmark.LEFT_WRIST.value].z]) 
+            l_shoulder = torch.tensor([landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].x,landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].y, landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].z])
+            l_elbow = torch.tensor([landmarks[mp_pose.PoseLandmark.LEFT_ELBOW.value].x,landmarks[mp_pose.PoseLandmark.LEFT_ELBOW.value].y, landmarks[mp_pose.PoseLandmark.LEFT_ELBOW.value].z])
+            l_wrist = torch.tensor([landmarks[mp_pose.PoseLandmark.LEFT_WRIST.value].x,landmarks[mp_pose.PoseLandmark.LEFT_WRIST.value].y, landmarks[mp_pose.PoseLandmark.LEFT_WRIST.value].z]) 
             return {'l_shoulder': l_shoulder, 'l_elbow': l_elbow, 'l_wrist': l_wrist}  
         except:
             return {'l_shoulder': None, 'l_elbow': None, 'l_wrist': None}  
@@ -59,7 +68,7 @@ def getArmPosesVideo(input_path):
     return return_dict
 
 
-print(wrtShoulder(getArmPosesFrame('media/sample_retarget_pose.jpg')))
+# print(wrtShoulder(getArmPosesFrame('media/sample_retarget_pose.jpg')))
 
 
 #print(getArmPosesVideo('media/sample_retarget_motion.mp4'))
