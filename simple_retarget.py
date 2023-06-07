@@ -11,21 +11,16 @@ def totalLoss(arm_pos, robot_pos):
     true_wrist = arm_pos['l_wrist']
     pred_elbow = robot_pos['panda_link5']
     pred_wrist = robot_pos['panda_hand']
-    print(type(true_elbow))
-    print(type(true_wrist))
-    print(type(pred_elbow))
-    print(type(pred_wrist))
     elbow_loss = torch.norm(true_elbow - pred_elbow)
     wrist_loss = torch.norm(true_wrist - pred_wrist)
-    print(type(elbow_loss))
-    print(type(wrist_loss))
-    return torch.mean(torch.tensor([elbow_loss, wrist_loss], requires_grad=True))
+    print("elbow rquires grad ", elbow_loss.grad)
+    print("wrist rquires grad ", wrist_loss.grad)
+    return elbow_loss + wrist_loss
 
 
 
 def forward(joint_angles, robot):
     robot.setJointAngles(joint_angles)
-    robot.updateArmPose()
     new_keypoints = robot.getKeyPointPoses()
     print("new keypoints returned ")
     print(new_keypoints)
@@ -36,9 +31,10 @@ panda_robot = RobotArm('robot_description/panda.urdf')
 
 step_size = 0.1
 loss_BGD = []
-n_iter = 20
+n_iter = 2
 
 joint_angles = torch.tensor([0,0, 0,0, 0.0, 0.0, 0.0, 0.0, 0.0], requires_grad=True)
+
 
  
 for i in range (n_iter):
@@ -53,6 +49,8 @@ for i in range (n_iter):
     loss.backward()
     # updateing the parameters after each iteration
     print("joint angles ", joint_angles)
+    print(joint_angles.requires_grad)
+    print(joint_angles.requires_grad_)
     joint_angles = joint_angles - step_size * joint_angles.grad
     # zeroing gradients after each iteration
     joint_angles.grad.data.zero_()

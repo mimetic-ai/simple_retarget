@@ -37,11 +37,10 @@ class RobotArm:
     # def setShoulder(self):
     #     self.shoulder = self.joints[0]
     def setJointAngles(self, joint_angles):
-        for x in range(len(joint_angles)):
-            self.joint_angles[x] = joint_angles[x]
-        self.joint_angles = torch.tensor(self.joint_angles)
-    def updateArmPose(self):
-        self.arm_pose = self.kinematic_chain.forward_kinematics(self.joint_angles, end_only = False)
+        self.joint_angles = joint_angles
+        self.joint_angles.requires_grad_ = True
+        self.arm_pose = self.kinematic_chain.forward_kinematics(joint_angles, end_only = False)
+        print("arm pose requires grad ", self.arm_pose)
     
     def getKeyPointPoses(self):
         keypoint_dict = {self.shoulder: torch.tensor([0, 0, 0]), self.elbow: torch.tensor([0, 0, 0]), self.wrist: torch.tensor([0, 0, 0])}
@@ -53,12 +52,13 @@ class RobotArm:
                 elbow_pose = self.arm_pose[self.elbow]
                 elbow_matrix = elbow_pose.get_matrix()
                 elbow_pos = elbow_matrix[:, :3, 3]
-                keypoint_dict[self.elbow] = torch.tensor(elbow_pos[0] - shoulder_pos[0])
+                keypoint_dict[self.elbow] = torch.tensor(elbow_pos[0] - shoulder_pos[0], requires_grad=True)
             elif keys in self.wrist:
                 wrist_pose = self.arm_pose[self.wrist]
                 wrist_matrix = wrist_pose.get_matrix()
                 wrist_pos = wrist_matrix[:, :3, 3]
-                keypoint_dict[self.wrist] = torch.tensor(wrist_pos[0] - shoulder_pos[0])
+                keypoint_dict[self.wrist] = torch.tensor(wrist_pos[0] - shoulder_pos[0], requires_grad=True)
+        print("keypoints ", keypoint_dict)
         return keypoint_dict
             
                
@@ -66,26 +66,26 @@ class RobotArm:
     
 
 panda_robot = RobotArm('robot_description/panda.urdf')
-print(panda_robot.kinematic_chain)
-print("----------------")
-print(panda_robot.joints)
-print("----------------")
-print(panda_robot.num_joints)
-print("----------------")
-print(panda_robot.links)
-print("----------------")
-print(panda_robot.num_links)
-print("----------------")
-print(panda_robot.shoulder)
-print("----------------")
-print(panda_robot.elbow)
-print("----------------")
-print(panda_robot.wrist)
-print("----------------")
-print(panda_robot.joint_angles)
-print("----------------")
-print(panda_robot.joint_angles)
-print(panda_robot.arm_pose)
-print("----------------")
-print(panda_robot.keypoint_pos)
-print("----------------")
+# print(panda_robot.kinematic_chain)
+# print("----------------")
+# print(panda_robot.joints)
+# print("----------------")
+# print(panda_robot.num_joints)
+# print("----------------")
+# print(panda_robot.links)
+# print("----------------")
+# print(panda_robot.num_links)
+# print("----------------")
+# print(panda_robot.shoulder)
+# print("----------------")
+# print(panda_robot.elbow)
+# print("----------------")
+# print(panda_robot.wrist)
+# print("----------------")
+# print(panda_robot.joint_angles)
+# print("----------------")
+# print(panda_robot.joint_angles)
+# print(panda_robot.arm_pose)
+# print("----------------")
+# print(panda_robot.keypoint_pos)
+# print("----------------")
