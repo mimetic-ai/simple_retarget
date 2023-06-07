@@ -40,10 +40,9 @@ class RobotArm:
         self.joint_angles = joint_angles
         self.joint_angles.requires_grad_ = True
         self.arm_pose = self.kinematic_chain.forward_kinematics(joint_angles, end_only = False)
-        print("arm pose requires grad ", self.arm_pose)
     
     def getKeyPointPoses(self):
-        keypoint_dict = {self.shoulder: torch.tensor([0, 0, 0]), self.elbow: torch.tensor([0, 0, 0]), self.wrist: torch.tensor([0, 0, 0])}
+        keypoint_dict = {self.shoulder: torch.tensor([0, 0, 0], requires_grad=True, dtype=torch.float), self.elbow: torch.tensor([0, 0, 0]), self.wrist: torch.tensor([0, 0, 0])}
         shoulder_pose = self.arm_pose[self.shoulder]
         shoulder_matrix = shoulder_pose.get_matrix()
         shoulder_pos = shoulder_matrix[:, :3, 3]
@@ -52,13 +51,12 @@ class RobotArm:
                 elbow_pose = self.arm_pose[self.elbow]
                 elbow_matrix = elbow_pose.get_matrix()
                 elbow_pos = elbow_matrix[:, :3, 3]
-                keypoint_dict[self.elbow] = torch.tensor(elbow_pos[0] - shoulder_pos[0], requires_grad=True)
+                keypoint_dict[self.elbow] = elbow_pos[0] - shoulder_pos[0]
             elif keys in self.wrist:
                 wrist_pose = self.arm_pose[self.wrist]
                 wrist_matrix = wrist_pose.get_matrix()
                 wrist_pos = wrist_matrix[:, :3, 3]
-                keypoint_dict[self.wrist] = torch.tensor(wrist_pos[0] - shoulder_pos[0], requires_grad=True)
-        print("keypoints ", keypoint_dict)
+                keypoint_dict[self.wrist] = wrist_pos[0] - shoulder_pos[0]
         return keypoint_dict
             
                
