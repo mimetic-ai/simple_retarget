@@ -38,7 +38,7 @@ class RobotArm:
     #     self.shoulder = self.joints[0]
     def setJointAngles(self, joint_angles):
         self.joint_angles = joint_angles
-        self.joint_angles.requires_grad_ = True
+        #self.joint_angles.requires_grad_ = True
         self.arm_pose = self.kinematic_chain.forward_kinematics(joint_angles, end_only = False)
     
     def getKeyPointPoses(self):

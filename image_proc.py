@@ -7,10 +7,13 @@ mp_pose = mp.solutions.pose
 
 
 ##Z forward
+##yaw is around Z
 
 ##Y up
+##pitch is around y
 
 ##X side
+##roll is around X
 
 
 
@@ -42,7 +45,16 @@ def getArmPosesFrame(input):
             l_wrist = torch.tensor([landmarks[mp_pose.PoseLandmark.LEFT_WRIST.value].x,landmarks[mp_pose.PoseLandmark.LEFT_WRIST.value].y, landmarks[mp_pose.PoseLandmark.LEFT_WRIST.value].z]) 
             return {'l_shoulder': l_shoulder, 'l_elbow': l_elbow, 'l_wrist': l_wrist}  
         except:
-            return {'l_shoulder': None, 'l_elbow': None, 'l_wrist': None}  
+            return {'l_shoulder': None, 'l_elbow': None, 'l_wrist': None}
+
+def getEndEffectorPose(input):
+    wrist_translation = input['l_wrist']
+    elbow_translation = input['l_elbow']
+    roll = np.arctan2(wrist_translation[1] - elbow_translation[1], wrist_translation[2] - elbow_translation[2])
+    pitch = np.arctan2(wrist_translation[0] - elbow_translation[0], wrist_translation[2] - elbow_translation[2])
+    yaw = 0
+    return (np.asarray(wrist_translation), np.asarray([roll, pitch, yaw]))
+
     
 
 
