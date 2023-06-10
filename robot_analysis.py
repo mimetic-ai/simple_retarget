@@ -14,7 +14,7 @@ class RobotArm:
         self.chain_traverse(self.kinematic_chain._root, self.links)
         self.num_links = len(self.links)
         self.shoulder = 'panda_link0'
-        self.elbow = 'panda_link5'
+        self.elbow = 'panda_link3'
         self.wrist = 'panda_hand'
         self.joint_angles = torch.tensor([0,0, 0,0, 0.0, 0.0, 0.0, 0.0, 0.0])
         self.arm_pose = self.kinematic_chain.forward_kinematics(self.joint_angles, end_only = False)

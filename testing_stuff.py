@@ -24,7 +24,14 @@ print(J_e)
 
 
 model = pin.buildModelFromUrdf('robot_description/panda.urdf')
+print(model.names)
+for names in model.names:
+    print(names)
 pos_lim_lo = np.array(model.lowerPositionLimit)
 pos_lim_hi = np.array(model.upperPositionLimit)
 print(pos_lim_hi)
 print(pos_lim_lo)
+degrees_list = np.rad2deg(pos_lim_lo)
+degrees_list_2 = np.rad2deg(pos_lim_hi)
+print(degrees_list)
+print(degrees_list_2)
