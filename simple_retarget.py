@@ -7,6 +7,7 @@ from robot_analysis import RobotArm
 import numpy as np
 import matplotlib.pyplot as plt
 import pinocchio as pin
+import json
 
 
 model = pin.buildModelFromUrdf('robot_description/panda.urdf')
@@ -16,16 +17,16 @@ lb = torch.tensor(pos_lim_lo[0:7])
 ub = torch.tensor(pos_lim_hi[0:7])
 
 def totalLoss(arm_pos, robot_pos, joint_angles, lb, ub):
-    true_elbow = torch.norm(arm_pos['l_elbow'])
-    true_wrist = torch.norm(arm_pos['l_wrist'])
-    pred_elbow = torch.norm(robot_pos['panda_link3'])
-    pred_wrist = torch.norm(robot_pos['panda_hand'])
+    true_elbow = (arm_pos['l_elbow'])/float(torch.norm(arm_pos['l_elbow']))
+    true_wrist = (arm_pos['l_wrist'])/float(torch.norm(arm_pos['l_wrist']))
+    pred_elbow = (robot_pos['panda_link3'])/float(torch.norm(robot_pos['panda_link3']))
+    pred_wrist = (robot_pos['panda_hand'])/float(torch.norm(robot_pos['panda_hand']))
     elbow_loss = torch.norm(true_elbow - pred_elbow)
     wrist_loss = torch.norm(true_wrist - pred_wrist)
     # print("elbow rquires grad ", elbow_loss.grad)
     # print("wrist rquires grad ", wrist_loss.grad)
-    joint_loss = torch.div(torch.tensor([0.00000001]), torch.pow(torch.dot((joint_angles - ub), (joint_angles + lb)), 2))
-    print("joint loss ", joint_loss)
+    joint_loss = torch.div(torch.tensor([0.00000001]), torch.pow(torch.dot((joint_angles - ub), (joint_angles - lb)), 2))
+    joint_loss = 1000 * joint_loss
     return elbow_loss + wrist_loss + joint_loss
 
 def newLoss(arm_pos, robot_pos):
@@ -47,7 +48,14 @@ def forward(joint_angles, robot):
     new_keypoints = robot.getKeyPointPoses()
     return new_keypoints
 
-arm_pos = wrtShoulder(getArmPosesFrame('media/sample_retarget_pose.jpg'))
+path = 'AMCParser/boxing_arm_data.json'
+f = open(path)
+data = json.load(f)
+arm_pos = {'l_shoulder': None, 'l_elbow': None, 'l_wrist': None}
+arm_pos['l_shoulder'] = torch.tensor(data['lclavicle'][0])
+arm_pos['l_elbow'] = torch.tensor(data['lhumerus'][0])
+arm_pos['l_wrist'] = torch.tensor(data['lhand'][0])
+
 panda_robot = RobotArm('robot_description/panda.urdf')
 end_effector_pose = getEndEffectorPose(arm_pos)
 
@@ -65,14 +73,14 @@ chain = kp.build_serial_chain_from_urdf(open('robot_description/panda.urdf').rea
 end_effector_transform = kp.transform.Transform(rot = end_effector_pose[1], pos = end_effector_pose[0])
 #end_effector_transform = kp.transform.Transform(rot = None, pos = end_effector_pose[0])
 ik_results = chain.inverse_kinematics(end_effector_transform)
-#joint_angles = torch.tensor(ik_results, requires_grad=True, dtype=torch.float)
-joint_angles = torch.tensor([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], requires_grad=True, dtype=torch.float)
+joint_angles = torch.tensor(ik_results, requires_grad=True, dtype=torch.float)
+#joint_angles = torch.tensor([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], requires_grad=True, dtype=torch.float)
 
 
 norm_var = 1000
 print(norm_var)
 print(eps)
-while (loss >= 0.02):
+while (i <= 500):
     # making predictions with forward pass
     robot_pos = forward(joint_angles=joint_angles, robot=panda_robot)
     # calculating the loss between original and predicted data points
