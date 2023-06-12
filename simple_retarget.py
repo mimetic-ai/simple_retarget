@@ -17,10 +17,18 @@ lb = torch.tensor(pos_lim_lo[0:7])
 ub = torch.tensor(pos_lim_hi[0:7])
 
 def totalLoss(arm_pos, robot_pos, joint_angles, lb, ub):
-    true_elbow = (arm_pos['l_elbow'])/float(torch.norm(arm_pos['l_elbow']))
-    true_wrist = (arm_pos['l_wrist'])/float(torch.norm(arm_pos['l_wrist']))
-    pred_elbow = (robot_pos['panda_link3'])/float(torch.norm(robot_pos['panda_link3']))
-    pred_wrist = (robot_pos['panda_hand'])/float(torch.norm(robot_pos['panda_hand']))
+    true_elbow_len = torch.norm(arm_pos['l_elbow'])
+    true_wrist_len = torch.norm(arm_pos['l_wrist'] - arm_pos['l_elbow'])
+    true_total_len = true_elbow_len + true_wrist_len
+    true_elbow = (arm_pos['l_elbow'])*float(true_elbow_len/true_total_len)
+    true_wrist = (arm_pos['l_wrist'])*float(torch.norm(true_wrist_len/true_total_len))
+
+    pred_elbow_len = torch.norm(robot_pos['panda_link3'])
+    pred_wrist_len = torch.norm(robot_pos['panda_hand'] - robot_pos['panda_link3'])
+    pred_total_len = pred_elbow_len + pred_wrist_len
+    pred_elbow = (robot_pos['panda_link3'])*float(pred_elbow_len/pred_total_len)
+    pred_wrist = (robot_pos['panda_hand'])*float(pred_wrist_len/pred_total_len)
+    
     elbow_loss = torch.norm(true_elbow - pred_elbow)
     wrist_loss = torch.norm(true_wrist - pred_wrist)
     # print("elbow rquires grad ", elbow_loss.grad)
