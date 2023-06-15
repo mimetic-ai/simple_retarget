@@ -40,6 +40,7 @@ class RobotArm:
         self.joint_angles = joint_angles
         #self.joint_angles.requires_grad_ = True
         self.arm_pose = self.kinematic_chain.forward_kinematics(joint_angles, end_only = False)
+        # print(self.arm_pose)
     
     def getKeyPointPoses(self):
         keypoint_dict = {self.shoulder: torch.tensor([0, 0, 0], requires_grad=True, dtype=torch.float), self.elbow: torch.tensor([0, 0, 0]), self.wrist: torch.tensor([0, 0, 0])}
