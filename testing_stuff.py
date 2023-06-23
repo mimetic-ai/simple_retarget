@@ -4,8 +4,9 @@ import pytorch_kinematics as pk
 import pinocchio as pin
 import numpy as np
 from image_proc import *
-from robot_analysis import RobotArm
+from robot_analysis import YumiArm
 import matplotlib.pyplot as plt
+import kinpy as kp
 
 import json
 
@@ -40,12 +41,32 @@ import json
 # print(degrees_list)
 # print(degrees_list_2)
 
-path = 'AMCParser/boxing_arm_data.json'
+# path = 'AMCParser/boxing_arm_data.json'
+# f = open(path)
+# data = json.load(f)
+# arm_pos = {'l_shoulder': None, 'l_elbow': None, 'l_wrist': None}
+# arm_pos['l_shoulder'] = torch.tensor(data['lclavicle'][0])
+# arm_pos['l_elbow'] = torch.tensor(data['lhumerus'][0])
+# arm_pos['l_wrist'] = torch.tensor(data['lhand'][0])
+
+# print(arm_pos)
+
+model = pin.buildModelFromUrdf('robot_description/yumi.urdf')
+pos_lim_lo = model.lowerPositionLimit
+pos_lim_hi = model.upperPositionLimit
+pos_lim_hi_left = pos_lim_hi[0:7]
+pos_lim_hi_right = pos_lim_hi[7:14]
+
+pos_lim_lo_left = pos_lim_lo[0:7]
+pos_lim_lo_right = pos_lim_lo[7:14]
+
+print((pos_lim_hi_left))
+print((pos_lim_lo_left))
+print(model)
+# urdf = 'robot_description/yumi.urdf'
+# yumi_robot = YumiArm('robot_description/yumi.urdf')
+
+path = 'tf_joint_motion.json'
 f = open(path)
 data = json.load(f)
-arm_pos = {'l_shoulder': None, 'l_elbow': None, 'l_wrist': None}
-arm_pos['l_shoulder'] = torch.tensor(data['lclavicle'][0])
-arm_pos['l_elbow'] = torch.tensor(data['lhumerus'][0])
-arm_pos['l_wrist'] = torch.tensor(data['lhand'][0])
-
-print(arm_pos)
+print(data)
