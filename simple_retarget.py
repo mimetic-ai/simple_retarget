@@ -8,7 +8,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pinocchio as pin
 import json
-
+import rospy
+from std_msgs.msg import Float64MultiArray
 
 model = pin.buildModelFromUrdf('robot_description/yumi.urdf')
 pos_lim_lo = model.lowerPositionLimit
@@ -22,28 +23,28 @@ pos_lim_lo_right = torch.tensor(pos_lim_lo[7:14])
 
 def totalLoss(arm_pos, robot_pos, joint_angles, lb, ub, arm_name):
     if arm_name == 'left':
-        true_elbow_len = torch.norm(arm_pos['elbow_l'])
-        true_wrist_len = torch.norm(arm_pos['wrist_l'] - arm_pos['elbow_l'])
+        true_elbow_len = torch.norm(arm_pos['l_elbow'] - arm_pos['l_shoulder'])
+        true_wrist_len = torch.norm(arm_pos['l_wrist'] - arm_pos['l_elbow'])
 
-        true_elbow = (arm_pos['elbow_l'])/float(true_elbow_len)
-        true_wrist = (arm_pos['wrist_l'] - arm_pos['elbow_l'])/float(true_wrist_len)
+        true_elbow = (arm_pos['l_elbow'] - arm_pos['l_shoulder'])/float(true_elbow_len)
+        true_wrist = (arm_pos['l_wrist'] - arm_pos['l_elbow'])/float(true_wrist_len)
 
-        pred_elbow_len = torch.norm(robot_pos['yumi_link_3_l'])
+        pred_elbow_len = torch.norm(robot_pos['yumi_link_3_l'] - robot_pos['yumi_link_1_l'])
         pred_wrist_len = torch.norm(robot_pos['yumi_link_7_l'] - robot_pos['yumi_link_3_l'])
         
-        pred_elbow = (robot_pos['yumi_link_3_l'])/float(pred_elbow_len)
+        pred_elbow = (robot_pos['yumi_link_3_l'] - robot_pos['yumi_link_1_l'])/float(pred_elbow_len)
         pred_wrist = (robot_pos['yumi_link_7_l'] - robot_pos['yumi_link_3_l'])/float(pred_wrist_len)
     elif arm_name == 'right':
-        true_elbow_len = torch.norm(arm_pos['elbow_r'])
-        true_wrist_len = torch.norm(arm_pos['wrist_r'] - arm_pos['elbow_r'])
+        true_elbow_len = torch.norm(arm_pos['r_elbow'] - arm_pos['r_shoulder'])
+        true_wrist_len = torch.norm(arm_pos['r_wrist'] - arm_pos['r_elbow'])
 
-        true_elbow = (arm_pos['elbow_r'])/float(true_elbow_len)
-        true_wrist = (arm_pos['wrist_r'] - arm_pos['elbow_r'])/float(true_wrist_len)
+        true_elbow = (arm_pos['r_elbow'] - arm_pos['r_shoulder'])/float(true_elbow_len)
+        true_wrist = (arm_pos['r_wrist'] - arm_pos['r_elbow'])/float(true_wrist_len)
 
-        pred_elbow_len = torch.norm(robot_pos['yumi_link_3_r'])
+        pred_elbow_len = torch.norm(robot_pos['yumi_link_3_r'] - robot_pos['yumi_link_1_r'])
         pred_wrist_len = torch.norm(robot_pos['yumi_link_7_r'] - robot_pos['yumi_link_3_r'])
         
-        pred_elbow = (robot_pos['yumi_link_3_r'])/float(pred_elbow_len)
+        pred_elbow = (robot_pos['yumi_link_3_r'] - robot_pos['yumi_link_1_r'])/float(pred_elbow_len)
         pred_wrist = (robot_pos['yumi_link_7_r'] - robot_pos['yumi_link_3_r'])/float(pred_wrist_len)
     
     elbow_err = true_elbow - pred_elbow
@@ -87,7 +88,7 @@ def retarget(arm_pos, arm_name, robot, initial_guess=None, max_iter=500):
         else:
             joint_angles = initial_guess
 
-        step_size = 1e-2
+        step_size = 1e-1
         # loss_BGD = []
         i = 0
         eps = 0.1
@@ -114,7 +115,7 @@ def retarget(arm_pos, arm_name, robot, initial_guess=None, max_iter=500):
         else:
             joint_angles = initial_guess
 
-        step_size = 1e-2
+        step_size = 1e-1
         # loss_BGD = []
         i = 0
         eps = 0.1
@@ -140,43 +141,59 @@ def retarget(arm_pos, arm_name, robot, initial_guess=None, max_iter=500):
 path = 'tf_joint_motion.json'
 f = open(path)
 data = json.load(f)
-# print('data type', type(data['rwrist']))
-# arm_pos = {'shoulder': None, 'elbow': None, 'wrist': None}
-# idx = 247
-# arm_pos['shoulder'] = torch.tensor(data['rclavicle'][idx])
-# arm_pos['elbow'] = torch.tensor(data['rhumerus'][idx])
-# arm_pos['wrist'] = torch.tensor(data['rwrist'][idx])
-# print('arm pose', arm_pos)
+# # print('data type', type(data['rwrist']))
+# # arm_pos = {'shoulder': None, 'elbow': None, 'wrist': None}
+# # idx = 247
+# # arm_pos['shoulder'] = torch.tensor(data['rclavicle'][idx])
+# # arm_pos['elbow'] = torch.tensor(data['rhumerus'][idx])
+# # arm_pos['wrist'] = torch.tensor(data['rwrist'][idx])
+# # print('arm pose', arm_pos)
 
 yumi_robot = YumiArm('robot_description/yumi.urdf')
-# end_effector_pose = getEndEffectorPose(arm_pos)
+# # end_effector_pose = getEndEffectorPose(arm_pos)
 
-joint_trajectory_right = torch.empty((len(data), 7))
+joint_trajectory_right = torch.empty((120, 7))
 joint_angles_right = None
-for i in range(len(data[10])):
-    arm_pos = {'shoulder_r': None, 'elbow_r': None, 'wrist_r': None}
-    arm_pos['shoulder_r'] = torch.tensor(data[i]['rclavicle'])
-    arm_pos['elbow_r'] = torch.tensor(data[i]['rhumerus'])
-    arm_pos['wrist_r'] = torch.tensor(data[i]['rwrist'])
-    joint_angles_right = retarget(arm_pos=arm_pos, robot=yumi_robot, initial_guess=joint_angles_right, arm_name="right")
-    joint_trajectory_right[i] = joint_angles_right
-
-
-
-
-joint_trajectory_left = torch.empty((len(data), 7))
+joint_trajectory_left = torch.empty((120, 7))
 joint_angles_left = None
-for i in range(len(data[10])):
-    arm_pos = {'shoulder_l': None, 'elbow_l': None, 'wrist_l': None}
-    arm_pos['shoulder_l'] = torch.tensor(data[i]['lclavicle'])
-    arm_pos['elbow_l'] = torch.tensor(data[i]['lhumerus'])
-    arm_pos['wrist_l'] = torch.tensor(data[i]['lwrist'])
-    joint_angles_left = retarget(arm_pos=arm_pos, robot=yumi_robot, initial_guess=joint_angles_left, arm_name="left")
-    joint_trajectory_left[i] = joint_angles_left
+# left_arm_pub = rospy.Publisher('yumi_left_arm_controller/command', Float64MultiArray, queue_size=10)
+# right_arm_pub = rospy.Publisher('yumi_right_arm_controller/command', Float64MultiArray, queue_size=10)
+arm_pos = {}
+# rospy.init_node('yumi_retargeting_node')
+# r = rospy.Rate(1)
 
+left_arm_data = Float64MultiArray()
+right_arm_data = Float64MultiArray()
+T = 120
 
-print(joint_trajectory_left)
-print(joint_trajectory_right)
+# for i in range(T):
+#     arm_pos['shoulder_r'] = torch.tensor(data[i]['rclavicle'])
+#     arm_pos['elbow_r'] = torch.tensor(data[i]['rhumerus'])
+#     arm_pos['wrist_r'] = torch.tensor(data[i]['rwrist'])
+#     joint_angles_right = retarget(arm_pos=arm_pos, robot=yumi_robot, initial_guess=joint_angles_right, arm_name="right")
+#     arm_pos = {'shoulder_l': None, 'elbow_l': None, 'wrist_l': None}
+#     arm_pos['shoulder_l'] = torch.tensor(data[i]['lclavicle'])
+#     arm_pos['elbow_l'] = torch.tensor(data[i]['lhumerus'])
+#     arm_pos['wrist_l'] = torch.tensor(data[i]['lwrist'])
+#     joint_angles_left = retarget(arm_pos=arm_pos, robot=yumi_robot, initial_guess=joint_angles_left, arm_name="left")
+#     joint_trajectory_right[i] = joint_angles_right
+#     joint_trajectory_left[i] = joint_angles_left
+#     left_arm_data.data = [0 for _ in range(7)]
+#     right_arm_data.data = [0 for _ in range(7)]
+#     left_arm_pub.publish(left_arm_data)
+#     right_arm_pub.publish(right_arm_data)
+    
+# while not rospy.is_shutdown():
+#     for i in range(T):
+#         left_arm_data.data = [val.item() for val in joint_trajectory_left[i]]
+#         right_arm_data.data = [val.item() for val in joint_trajectory_right[i]]
+#         left_arm_pub.publish(left_arm_data)
+#         right_arm_pub.publish(right_arm_data)
+#         print(f'published frame {i}')
+#         rospy.sleep(rospy.Duration(0.1))
+
+# print(joint_trajectory_left)
+# print(joint_trajectory_right)
 # step_size = 1e-2
 # loss_BGD = []
 # n_iter = 2
