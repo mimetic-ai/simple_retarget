@@ -5,16 +5,16 @@ import torch
 
 
 
-class YumiArm:
-    def __init__(self, urdf):
-        self.kinematic_chain_l = pk.build_serial_chain_from_urdf(open(urdf).read(), 'yumi_link_7_l')
-        self.kinematic_chain_r = pk.build_serial_chain_from_urdf(open(urdf).read(), 'yumi_link_7_r')
-        self.shoulder_l = 'yumi_link_1_l'
-        self.elbow_l = 'yumi_link_3_l'
-        self.wrist_l = 'yumi_link_7_l'
-        self.shoulder_r = 'yumi_link_1_r'
-        self.elbow_r = 'yumi_link_3_r'
-        self.wrist_r = 'yumi_link_7_r'
+class TiagoDual:
+    def __init__(self, urdf_right, urdf_left):
+        self.kinematic_chain_l = pk.build_serial_chain_from_urdf(open(urdf_left).read(), 'arm_left_7_link')
+        self.kinematic_chain_r = pk.build_serial_chain_from_urdf(open(urdf_right).read(), 'arm_right_7_link')
+        self.shoulder_l = 'arm_left_1_link'
+        self.elbow_l = 'arm_left_3_link'
+        self.wrist_l = 'arm_left_7_link'
+        self.shoulder_r = 'arm_right_1_link'
+        self.elbow_r = 'arm_right_3_link'
+        self.wrist_r = 'arm_right_7_link'
         self.joint_angles_l = torch.tensor([0,0, 0,0, 0.0, 0.0, 0.0, 0.0, 0.0])
         self.arm_pose_l = self.kinematic_chain_l.forward_kinematics(self.joint_angles_l, end_only = False)
         self.joint_angles_r = torch.tensor([0,0, 0,0, 0.0, 0.0, 0.0, 0.0, 0.0])
