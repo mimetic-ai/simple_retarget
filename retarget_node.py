@@ -10,8 +10,8 @@ CAM_TO_BODY_ROT = np.array([[0 ,0, -1], [1, 0, 0], [0, -1, 0]])
 joint_angles_left = None
 joint_angles_right = None
 
-yumi_left_arm_pub = rospy.Publisher('yumi_left_arm_controller/command', Float64MultiArray, queue_size=10)
-yumi_right_arm_pub = rospy.Publisher('yumi_right_arm_controller/command', Float64MultiArray, queue_size=10)
+tiago_left_arm_pub = rospy.Publisher('arm_left_controller/command', Float64MultiArray, queue_size=10)
+tiago_right_arm_pub = rospy.Publisher('arm_right_controller/command', Float64MultiArray, queue_size=10)
 
 
 def joints_pose_cb(msg):
@@ -37,8 +37,8 @@ def joints_pose_cb(msg):
     right_arm_msg = Float64MultiArray()
     right_arm_msg.data = [val.item() for val in joint_angles_right]
 
-    yumi_left_arm_pub.publish(left_arm_msg)
-    yumi_right_arm_pub.publish(right_arm_msg)
+    tiago_left_arm_pub.publish(left_arm_msg)
+    tiago_right_arm_pub.publish(right_arm_msg)
 
 
 if __name__ == '__main__':
