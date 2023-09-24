@@ -20,6 +20,31 @@ pos_lim_hi_left = torch.tensor(model_left.upperPositionLimit)
 pos_lim_lo_right = torch.tensor(model_right.lowerPositionLimit)
 pos_lim_hi_right = torch.tensor(model_right.upperPositionLimit)
 
+def totalLossNoNorm(arm_pos, robot_pos, joint_angles, lb, ub, arm_name):
+    print("arm_pos ",arm_pos)
+    print("robot_pos ",robot_pos)
+    if arm_name == 'left':
+        true_elbow = (arm_pos['l_elbow'] - arm_pos['l_shoulder'])
+        true_wrist = (arm_pos['l_wrist'] - arm_pos['l_elbow'])
+        
+        pred_elbow = (robot_pos['arm_left_3_link'] - robot_pos['arm_left_1_link'])
+        pred_wrist = (robot_pos['arm_left_7_link'] - robot_pos['arm_left_3_link'])
+    elif arm_name == 'right':
+        true_elbow = (arm_pos['r_elbow'] - arm_pos['r_shoulder'])
+        true_wrist = (arm_pos['r_wrist'] - arm_pos['r_elbow'])
+        
+        pred_elbow = (robot_pos['arm_right_3_link'] - robot_pos['arm_right_1_link'])
+        pred_wrist = (robot_pos['arm_right_7_link'] - robot_pos['arm_right_3_link'])
+    
+    elbow_err = true_elbow - pred_elbow
+    elbow_loss = torch.dot(elbow_err, elbow_err)
+    
+    wrist_err = true_wrist - pred_wrist
+    wrist_loss = torch.dot(wrist_err, wrist_err)
+    joint_loss = torch.div(torch.tensor([1e-8]), torch.pow(torch.dot((joint_angles - ub), (joint_angles - lb)), 2))
+    total_loss = (2 * elbow_loss) + wrist_loss + (2 * joint_loss)
+    print("total_loss ",total_loss)
+    return total_loss
 
 
 def totalLoss(arm_pos, robot_pos, joint_angles, lb, ub, arm_name):
@@ -56,7 +81,9 @@ def totalLoss(arm_pos, robot_pos, joint_angles, lb, ub, arm_name):
     # print("elbow rquires grad ", elbow_loss.grad)
     # print("wrist rquires grad ", wrist_loss.grad)
     joint_loss = torch.div(torch.tensor([1e-8]), torch.pow(torch.dot((joint_angles - ub), (joint_angles - lb)), 2))
-    return elbow_loss + wrist_loss + joint_loss
+    total_loss = elbow_loss + wrist_loss + joint_loss
+    print(total_loss)
+    return total_loss
 
 
 
@@ -86,7 +113,7 @@ def retarget(arm_pos, arm_name, robot, initial_guess=None, max_iter=500):
             # making predictions with forward pass
             robot_pos = forward(joint_angles=joint_angles, robot=robot, arm_name=arm_name)
             # calculating the loss between original and predicted data points
-            loss = totalLoss(arm_pos=arm_pos, robot_pos=robot_pos, 
+            loss = totalLossNoNorm(arm_pos=arm_pos, robot_pos=robot_pos, 
                             joint_angles=joint_angles, lb=pos_lim_lo_left, ub=pos_lim_hi_left, arm_name=arm_name)
             print(loss)
 
@@ -113,7 +140,7 @@ def retarget(arm_pos, arm_name, robot, initial_guess=None, max_iter=500):
             # making predictions with forward pass
             robot_pos = forward(joint_angles=joint_angles, robot=robot, arm_name=arm_name)
             # calculating the loss between original and predicted data points
-            loss = totalLoss(arm_pos=arm_pos, robot_pos=robot_pos, 
+            loss = totalLossNoNorm(arm_pos=arm_pos, robot_pos=robot_pos, 
                             joint_angles=joint_angles, lb=pos_lim_lo_right, ub=pos_lim_hi_left, arm_name=arm_name)
             print(loss)
 
@@ -126,9 +153,10 @@ def retarget(arm_pos, arm_name, robot, initial_guess=None, max_iter=500):
             i += 1
     return joint_angles
 
-path = 'tf_joint_motion.json'
-f = open(path)
-data = json.load(f)
+# path = 'tf_joint_motion.json'
+# f = open(path)
+# data = json.load(f)
+# print(data[0])
 
 tiago_robot = TiagoDual(urdf_right=urdf_right, urdf_left=urdf_left)
 
