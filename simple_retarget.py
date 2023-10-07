@@ -99,14 +99,17 @@ def forward(joint_angles, robot, arm_name):
 def retarget(arm_pos, arm_name, robot, initial_guess=None, max_iter=500):
     if arm_name == 'left':
         if initial_guess is None:
-            joint_angles = torch.tensor(data=(pos_lim_lo_left+pos_lim_hi_left)/2, dtype=torch.float, requires_grad=True)
+            joint_angles = []
+            for x in range(7):
+                joint_angles.append(torch.rand(1) * (pos_lim_hi_left[x] - pos_lim_lo_left[x]) + pos_lim_lo_left[x])
+            joint_angles = torch.tensor(joint_angles, requires_grad=True)
         else:
             joint_angles = initial_guess
 
         step_size = 1e-1
         # loss_BGD = []
         i = 0
-        eps = 0.1
+        eps = 0.001
         delta = 1000
 
         while (i < max_iter and delta > eps):
@@ -126,14 +129,17 @@ def retarget(arm_pos, arm_name, robot, initial_guess=None, max_iter=500):
             i += 1
     elif arm_name == 'right':
         if initial_guess is None:
-            joint_angles = torch.tensor(data=(pos_lim_hi_right+pos_lim_lo_right)/2, dtype=torch.float, requires_grad=True)
+            joint_angles = []
+            for x in range(7):
+                joint_angles.append(torch.rand(1) * (pos_lim_hi_right[x] - pos_lim_lo_right[x]) + pos_lim_lo_right[x])
+            joint_angles = torch.tensor(joint_angles, requires_grad=True)
         else:
             joint_angles = initial_guess
 
         step_size = 1e-1
         # loss_BGD = []
         i = 0
-        eps = 0.1
+        eps = 0.001
         delta = 1000
 
         while (i < max_iter and delta > eps):

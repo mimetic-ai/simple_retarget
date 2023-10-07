@@ -21,6 +21,23 @@ class TiagoDual:
         self.arm_pose_r = self.kinematic_chain_r.forward_kinematics(self.joint_angles_r, end_only = False)
         self.keypoint_pos_l = self.getKeyPointPosesLeft()
         self.keypoint_pos_r = self.getKeyPointPosesRight()
+    
+    
+    
+    def getElbowPosition(self, arm_name):
+        link1 = "arm_{}_3_link".format(arm_name)
+        link2 = "arm_{}_4_link".format(arm_name)
+        if arm_name == "left":
+            elbow_pos_high = self.arm_pose_l[link1]
+            elbow_pos_low = self.arm_pose_l[link2]
+        elif arm_name == "right":
+            elbow_pos_high = self.arm_pose_r[link1]
+            elbow_pos_low = self.arm_pose_r[link2]
+        link1_pos = elbow_pos_high.get_matrix()[:, :3, 3][0]
+        link2_pos = elbow_pos_low.get_matrix()[:, :3, 3][0]
+        elbow_pos = (link1_pos + link2_pos)/2
+        return elbow_pos
+    
     def setJointAnglesLeft(self, joint_angles):
         self.joint_angles_l = joint_angles
         #self.joint_angles.requires_grad_ = True
@@ -39,10 +56,8 @@ class TiagoDual:
         shoulder_pos = shoulder_matrix[:, :3, 3]
         for keys in self.arm_pose_l:
             if keys in self.elbow_l:
-                elbow_pose = self.arm_pose_l[self.elbow_l]
-                elbow_matrix = elbow_pose.get_matrix()
-                elbow_pos = elbow_matrix[:, :3, 3]
-                keypoint_dict[self.elbow_l] = elbow_pos[0] - shoulder_pos[0]
+                elbow_pos = self.getElbowPosition("left")
+                keypoint_dict[self.elbow_l] = elbow_pos - shoulder_pos[0]
             elif keys in self.wrist_l:
                 wrist_pose = self.arm_pose_l[self.wrist_l]
                 wrist_matrix = wrist_pose.get_matrix()
@@ -56,10 +71,8 @@ class TiagoDual:
         shoulder_pos = shoulder_matrix[:, :3, 3]
         for keys in self.arm_pose_r:
             if keys in self.elbow_r:
-                elbow_pose = self.arm_pose_r[self.elbow_r]
-                elbow_matrix = elbow_pose.get_matrix()
-                elbow_pos = elbow_matrix[:, :3, 3]
-                keypoint_dict[self.elbow_r] = elbow_pos[0] - shoulder_pos[0]
+                elbow_pos = self.getElbowPosition("right")
+                keypoint_dict[self.elbow_r] = elbow_pos - shoulder_pos[0]
             elif keys in self.wrist_r:
                 wrist_pose = self.arm_pose_r[self.wrist_r]
                 wrist_matrix = wrist_pose.get_matrix()
