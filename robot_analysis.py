@@ -6,9 +6,9 @@ import torch
 
 
 class TiagoDual:
-    def __init__(self, urdf_right, urdf_left):
-        self.kinematic_chain_l = pk.build_serial_chain_from_urdf(open(urdf_left).read(), 'arm_left_7_link')
-        self.kinematic_chain_r = pk.build_serial_chain_from_urdf(open(urdf_right).read(), 'arm_right_7_link')
+    def __init__(self, urdf):
+        self.kinematic_chain_l = pk.build_serial_chain_from_urdf(open(urdf).read(), 'arm_left_7_link')
+        self.kinematic_chain_r = pk.build_serial_chain_from_urdf(open(urdf).read(), 'arm_right_7_link')
         self.shoulder_l = 'arm_left_1_link'
         self.elbow_l = 'arm_left_3_link'
         self.wrist_l = 'arm_left_7_link'
@@ -39,14 +39,15 @@ class TiagoDual:
         return elbow_pos
     
     def setJointAnglesLeft(self, joint_angles):
-        self.joint_angles_l = joint_angles
+        self.joint_angles_l = torch.cat((torch.tensor([0.0]), joint_angles), 0)
+        print(self.joint_angles_l)
         #self.joint_angles.requires_grad_ = True
-        self.arm_pose_l = self.kinematic_chain_l.forward_kinematics(joint_angles, end_only = False)
+        self.arm_pose_l = self.kinematic_chain_l.forward_kinematics(self.joint_angles_l, end_only = False)
         # print(self.arm_pose)
     def setJointAnglesRight(self, joint_angles):
-        self.joint_angles_r = joint_angles
+        self.joint_angles_r = torch.cat((torch.tensor([0.0]), joint_angles), 0)
         #self.joint_angles.requires_grad_ = True
-        self.arm_pose_r = self.kinematic_chain_r.forward_kinematics(joint_angles, end_only = False)
+        self.arm_pose_r = self.kinematic_chain_r.forward_kinematics(self.joint_angles_r, end_only = False)
         # print(self.arm_pose)
     
     def getKeyPointPosesLeft(self):
@@ -54,14 +55,18 @@ class TiagoDual:
         shoulder_pose = self.arm_pose_l[self.shoulder_l]
         shoulder_matrix = shoulder_pose.get_matrix()
         shoulder_pos = shoulder_matrix[:, :3, 3]
+        print("shoulder position original ", shoulder_pos[0])
         for keys in self.arm_pose_l:
             if keys in self.elbow_l:
-                elbow_pos = self.getElbowPosition("left")
-                keypoint_dict[self.elbow_l] = elbow_pos - shoulder_pos[0]
+                elbow_pose = self.arm_pose_l[self.elbow_l]
+                elbow_matrix = elbow_pose.get_matrix()
+                elbow_pos = elbow_matrix[:, :3, 3]
+                keypoint_dict[self.elbow_l] = elbow_pos[0] - shoulder_pos[0]
             elif keys in self.wrist_l:
                 wrist_pose = self.arm_pose_l[self.wrist_l]
                 wrist_matrix = wrist_pose.get_matrix()
                 wrist_pos = wrist_matrix[:, :3, 3]
+                print("wrist pos original ", wrist_pos[0])
                 keypoint_dict[self.wrist_l] = wrist_pos[0] - shoulder_pos[0]
         return keypoint_dict
     def getKeyPointPosesRight(self):
@@ -71,8 +76,10 @@ class TiagoDual:
         shoulder_pos = shoulder_matrix[:, :3, 3]
         for keys in self.arm_pose_r:
             if keys in self.elbow_r:
-                elbow_pos = self.getElbowPosition("right")
-                keypoint_dict[self.elbow_r] = elbow_pos - shoulder_pos[0]
+                elbow_pose = self.arm_pose_r[self.elbow_r]
+                elbow_matrix = elbow_pose.get_matrix()
+                elbow_pos = elbow_matrix[:, :3, 3]
+                keypoint_dict[self.elbow_r] = elbow_pos[0] - shoulder_pos[0]
             elif keys in self.wrist_r:
                 wrist_pose = self.arm_pose_r[self.wrist_r]
                 wrist_matrix = wrist_pose.get_matrix()

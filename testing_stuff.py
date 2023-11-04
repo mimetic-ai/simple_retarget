@@ -3,14 +3,16 @@ import math
 import pytorch_kinematics as pk
 
 
-urdf = 'robot_description/tiago_left_arm_1.urdf'
+urdf = 'robot_description/tiago_dual.urdf'
 chain = pk.build_serial_chain_from_urdf(open(urdf).read(), 'arm_left_7_link')
 print(chain.get_joint_parameter_names())
 
 # specify joint values (can do so in many forms)
-th = [0.0, -math.pi / 4.0, 0.0, math.pi / 2.0, 0.0, math.pi / 4.0, 0.0, 0.0]
+th = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 # do forward kinematics and get transform objects; end_only=False gives a dictionary of transforms for all links
 ret = chain.forward_kinematics(th, end_only=False)
+
+print(ret)
 
 
 # print(chain)
@@ -30,10 +32,10 @@ ret = chain.forward_kinematics(th, end_only=False)
 # print(pos_lim_lo)
 # print(pos_lim_hi)
 
-path = "AMCParser/boxing_arm_data_2.json"
-f = open(path)
-data = json.load(f)
-print(data['rwrist'][236])
-print(data['rhumerus'][236])
-print(data['rclavicle'][236])
+# path = "AMCParser/boxing_arm_data_2.json"
+# f = open(path)
+# data = json.load(f)
+# print(data['rwrist'][236])
+# print(data['rhumerus'][236])
+# print(data['rclavicle'][236])
 

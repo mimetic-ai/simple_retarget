@@ -1,0 +1,12 @@
+{
+    "python.autoComplete.extraPaths": [
+        "/home/tank/catkin_ws/devel/lib/python3/dist-packages",
+        "/opt/ros/noetic/lib/python3/dist-packages",
+        "/catkin_ws/src/openpose/build/python"
+    ],
+    "python.analysis.extraPaths": [
+        "/home/tank/catkin_ws/devel/lib/python3/dist-packages",
+        "/opt/ros/noetic/lib/python3/dist-packages",
+        "/catkin_ws/src/openpose/build/python"
+    ]
+}
