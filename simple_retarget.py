@@ -96,6 +96,9 @@ def forward(joint_angles, robot, arm_name):
         new_keypoints = robot.getKeyPointPosesRight()
     return new_keypoints
 
+
+
+
 def retarget(arm_pos, arm_name, robot, initial_guess=None, max_iter=500):
     if arm_name == 'left':
         if initial_guess is None:
