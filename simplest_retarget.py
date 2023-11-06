@@ -182,6 +182,7 @@ def create_message(arm_dict, start, end, arm_name):
 def main():
     # Initialize the ROS node
     rospy.init_node('simplest_retarget', anonymous=True)
+    r = rospy.Rate(1)
 
     # Load data from a JSON file
     data_file = 'AMCParser/mopping_data_new.json'
@@ -196,13 +197,17 @@ def main():
     left_msg = create_message(arm_dict=loaded_data, start=80, end=155, arm_name='left')
     right_msg = create_message(arm_dict=loaded_data, start=80, end=155, arm_name='right')
 
-    tiago_left_arm_pub.publish(left_msg)
-    tiago_right_arm_pub.publish(right_msg)
+    while not rospy.is_shutdown():
+        try:
+            print("work here")
+            tiago_left_arm_pub.publish(left_msg)
+            tiago_right_arm_pub.publish(right_msg)
+            rospy.spin()
+            r.sleep()
+        except rospy.ROSInterruptException:
+            exit()
 
-
-# Define other functions here (get_joint_1, get_joint_2, etc.) with comments explaining their functionality.
 
 if __name__ == '__main__':
     main()
-    rospy.spin()  # Keep the node running
 
