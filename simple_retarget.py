@@ -9,13 +9,13 @@ import matplotlib.pyplot as plt
 import pinocchio as pin
 import json
 
-
 model = pin.buildModelFromUrdf('robot_description/panda.urdf')
 pos_lim_lo = model.lowerPositionLimit
 pos_lim_hi = model.upperPositionLimit
 lb = torch.tensor(pos_lim_lo[0:7])
 ub = torch.tensor(pos_lim_hi[0:7])
 
+##calculates loss as offset between relative arm pose of robot and relative arm pose of human
 def totalLoss(arm_pos, robot_pos, joint_angles, lb, ub):
     true_elbow_len = torch.norm(arm_pos['elbow'])
     true_wrist_len = torch.norm(arm_pos['wrist'] - arm_pos['elbow'])
@@ -52,12 +52,13 @@ def newLoss(arm_pos, robot_pos):
     wrist_loss = mean_squared_error(true_wrist, pred_wrist)
     return (elbow_loss + wrist_loss)/2
 
-
+###calculates pose given new joint angles
 def forward(joint_angles, robot):
     robot.setJointAngles(joint_angles)
     new_keypoints = robot.getKeyPointPoses()
     return new_keypoints
 
+##uses gradient descent to determine joint angles that get robot arm closest to the pose of the human demonstrator's arm
 def retarget(arm_pos, robot, initial_guess=None, max_iter=500):
     if initial_guess is None:
         joint_angles = torch.tensor(data=(lb+ub)/2, dtype=torch.float, requires_grad=True)
