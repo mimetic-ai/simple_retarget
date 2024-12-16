@@ -20,7 +20,7 @@ pos_lim_hi_right = torch.tensor(pos_lim_hi[7:14])
 pos_lim_lo_left = torch.tensor(pos_lim_lo[0:7])
 pos_lim_lo_right = torch.tensor(pos_lim_lo[7:14])
 
-
+###calculates loss as offset between relative pose of robot arm and relative pose of matching human arm
 def totalLoss(arm_pos, robot_pos, joint_angles, lb, ub, arm_name):
     if arm_name == 'left':
         true_elbow_len = torch.norm(arm_pos['l_elbow'] - arm_pos['l_shoulder'])
@@ -71,7 +71,7 @@ def totalLoss(arm_pos, robot_pos, joint_angles, lb, ub, arm_name):
 #     wrist_loss = mean_squared_error(true_wrist, pred_wrist)
 #     return (elbow_loss + wrist_loss)/2
 
-
+##propagates joint angles using forward kinematics to get pose from angles
 def forward(joint_angles, robot, arm_name):
     if arm_name == 'left':
         robot.setJointAnglesLeft(joint_angles)
@@ -81,6 +81,7 @@ def forward(joint_angles, robot, arm_name):
         new_keypoints = robot.getKeyPointPosesRight()
     return new_keypoints
 
+##uses gradient descent to find robot joint angles that result in robot arm pose that best matches human arm pose
 def retarget(arm_pos, arm_name, robot, initial_guess=None, max_iter=500):
     if arm_name == 'left':
         if initial_guess is None:
