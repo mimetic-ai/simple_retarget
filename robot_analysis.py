@@ -4,7 +4,8 @@ import numpy as np
 import torch
 
 
-
+###class representing robot arm. contains kinematic information about arm, including its current joint angles, poses, and methods to update 
+##joint angles
 class RobotArm:
     def __init__(self, urdf):
         self.kinematic_chain = pk.build_serial_chain_from_urdf(open(urdf).read(), 'panda_hand')
