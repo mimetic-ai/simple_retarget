@@ -21,11 +21,13 @@ class YumiArm:
         self.arm_pose_r = self.kinematic_chain_r.forward_kinematics(self.joint_angles_r, end_only = False)
         self.keypoint_pos_l = self.getKeyPointPosesLeft()
         self.keypoint_pos_r = self.getKeyPointPosesRight()
+        
     def setJointAnglesLeft(self, joint_angles):
         self.joint_angles_l = joint_angles
         #self.joint_angles.requires_grad_ = True
         self.arm_pose_l = self.kinematic_chain_l.forward_kinematics(joint_angles, end_only = False)
         # print(self.arm_pose)
+    
     def setJointAnglesRight(self, joint_angles):
         self.joint_angles_r = joint_angles
         #self.joint_angles.requires_grad_ = True
@@ -49,6 +51,7 @@ class YumiArm:
                 wrist_pos = wrist_matrix[:, :3, 3]
                 keypoint_dict[self.wrist_l] = wrist_pos[0] - shoulder_pos[0]
         return keypoint_dict
+        
     def getKeyPointPosesRight(self):
         keypoint_dict = {self.shoulder_r: torch.tensor([0, 0, 0], requires_grad=True, dtype=torch.float), self.elbow_r: torch.tensor([0, 0, 0]), self.wrist_r: torch.tensor([0, 0, 0])}
         shoulder_pose = self.arm_pose_r[self.shoulder_r]
@@ -124,15 +127,3 @@ class RobotArm:
             
                
 
-    
-
-# panda_robot = YumiArm('robot_description/yumi.urdf')
-# print(panda_robot.kinematic_chain_l)
-# print(panda_robot.kinematic_chain_r)
-# print("----------------")
-# print(panda_robot.arm_pose_l)
-# print(panda_robot.arm_pose_r)
-# print("----------------")
-# print(panda_robot.keypoint_pos_l)
-# print(panda_robot.keypoint_pos_r)
-# print("----------------")
